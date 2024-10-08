@@ -38,7 +38,8 @@ const useFetchMovieDetails = (id: string | undefined) => {
         );
         setMovie(response.data);
         setError(null);
-      } catch (error) {
+      } catch (err) {
+        console.error(err);
         setError("Error while fetching movie details.");
       } finally {
         setLoading(false);

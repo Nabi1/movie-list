@@ -1,7 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
 const API_TOKEN = process.env.NEXT_PUBLIC_TMDB_API_TOKEN;
+
+const axiosInstance = axios.create({
+  baseURL: "https://api.themoviedb.org/3",
+  headers: {
+    Authorization: `Bearer ${API_TOKEN}`,
+  },
+});
 
 type Movie = {
   backdrop_path: string;
@@ -29,44 +36,7 @@ const useFetchMovies = () => {
   const [hasMore, setHasMore] = useState(true);
   const [activeQuery, setActiveQuery] = useState("");
 
-  const axiosInstance = axios.create({
-    baseURL: "https://api.themoviedb.org/3",
-    headers: {
-      Authorization: `Bearer ${API_TOKEN}`,
-    },
-  });
-
-  const searchMovies = async (query: string, page: number = 1) => {
-    setActiveQuery(query);
-
-    if (!query.trim()) {
-      setPage(1);
-      return fetchTrendingMovies(1);
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await axiosInstance.get(`/search/movie`, {
-        params: { query, page },
-      });
-
-      if (page === 1) {
-        setMovies(response.data.results);
-      } else {
-        setMovies((prevMovies) => [...prevMovies, ...response.data.results]);
-      }
-
-      setHasMore(response.data.results.length > 0);
-    } catch (err) {
-      setError("Error while fetching movies.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchTrendingMovies = async (page: number = 1) => {
+  const fetchTrendingMovies = useCallback(async (page: number = 1) => {
     setLoading(true);
     setError(null);
 
@@ -75,19 +45,54 @@ const useFetchMovies = () => {
         params: { page },
       });
 
-      if (page === 1) {
-        setMovies(response.data.results);
-      } else {
-        setMovies((prevMovies) => [...prevMovies, ...response.data.results]);
-      }
+      setMovies((prevMovies) =>
+        page === 1
+          ? response.data.results
+          : [...prevMovies, ...response.data.results]
+      );
 
       setHasMore(response.data.results.length > 0);
     } catch (err) {
+      console.error(err);
       setError("Error while fetching trending movies.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const searchMovies = useCallback(
+    async (query: string, page: number = 1) => {
+      setActiveQuery(query);
+
+      if (!query.trim()) {
+        setPage(1);
+        return fetchTrendingMovies(1);
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await axiosInstance.get(`/search/movie`, {
+          params: { query, page },
+        });
+
+        setMovies((prevMovies) =>
+          page === 1
+            ? response.data.results
+            : [...prevMovies, ...response.data.results]
+        );
+
+        setHasMore(response.data.results.length > 0);
+      } catch (err) {
+        console.error(err);
+        setError("Error while fetching movies.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchTrendingMovies]
+  );
 
   const loadMoreMovies = () => {
     if (hasMore && !loading) {
@@ -101,7 +106,7 @@ const useFetchMovies = () => {
     } else {
       fetchTrendingMovies(page);
     }
-  }, [page]);
+  }, [page, activeQuery, searchMovies, fetchTrendingMovies]);
 
   return { movies, searchMovies, loading, error, loadMoreMovies, hasMore };
 };

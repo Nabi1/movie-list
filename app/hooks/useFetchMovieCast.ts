@@ -38,7 +38,8 @@ const useFetchMovieCast = (id: string | undefined) => {
         );
         setCast(response.data.cast.slice(0, 5));
         setError(null);
-      } catch (error) {
+      } catch (err) {
+        console.error(err);
         setError("Error while fetching the cast");
       } finally {
         setLoading(false);

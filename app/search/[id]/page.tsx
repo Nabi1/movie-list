@@ -1,6 +1,8 @@
 "use client";
+
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 import useFetchMovieDetails from "../../hooks/useFetchMovieDetails";
 import useFetchMovieCast from "../../hooks/useFetchMovieCast";
@@ -37,9 +39,11 @@ export default function MovieDetailsPage({
     <div className="p-4 max-w-lg mx-auto my-10">
       <Link href="/">&larr; Retour à la recherche</Link>
 
-      <img
+      <Image
         src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
         alt={movie.title}
+        width={500}
+        height={750}
         className="w-full h-auto rounded-lg my-5"
       />
       <h1 className="text-3xl font-bold mb-4">{movie.title}</h1>

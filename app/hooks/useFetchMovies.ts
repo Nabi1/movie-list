@@ -3,11 +3,13 @@ import axios from "axios";
 
 const API_TOKEN = process.env.NEXT_PUBLIC_TMDB_API_TOKEN;
 
-const useSearchMovies = () => {
+const useFetchMovies = () => {
   const [movies, setMovies] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const axiosInstance = axios.create({
     baseURL: "https://api.themoviedb.org/3",
@@ -16,7 +18,7 @@ const useSearchMovies = () => {
     },
   });
 
-  const searchMovies = async (query: string) => {
+  const searchMovies = async (query: string, page: number = 1) => {
     if (!query) return;
 
     setLoading(true);
@@ -25,9 +27,16 @@ const useSearchMovies = () => {
 
     try {
       const response = await axiosInstance.get(`/search/movie`, {
-        params: { query },
+        params: { query, page },
       });
-      setMovies(response.data.results);
+
+      if (page === 1) {
+        setMovies(response.data.results);
+      } else {
+        setMovies((prevMovies) => [...prevMovies, ...response.data.results]);
+      }
+
+      setHasMore(response.data.results.length > 0);
     } catch (err) {
       setError("Error while fetching movies.");
     } finally {
@@ -35,13 +44,22 @@ const useSearchMovies = () => {
     }
   };
 
-  const fetchTrendingMovies = async () => {
+  const fetchTrendingMovies = async (page: number = 1) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await axiosInstance.get(`/trending/movie/week`);
-      setMovies(response.data.results);
+      const response = await axiosInstance.get(`/trending/movie/week`, {
+        params: { page },
+      });
+
+      if (page === 1) {
+        setMovies(response.data.results);
+      } else {
+        setMovies((prevMovies) => [...prevMovies, ...response.data.results]);
+      }
+
+      setHasMore(response.data.results.length > 0);
     } catch (err) {
       setError("Error while fetching trending movies.");
     } finally {
@@ -49,13 +67,21 @@ const useSearchMovies = () => {
     }
   };
 
-  useEffect(() => {
-    if (!isSearching) {
-      fetchTrendingMovies();
+  const loadMoreMovies = () => {
+    if (hasMore && !loading) {
+      setPage((prevPage) => prevPage + 1);
     }
-  }, [isSearching]);
+  };
 
-  return { movies, searchMovies, loading, error };
+  useEffect(() => {
+    if (isSearching) {
+      searchMovies("", page);
+    } else {
+      fetchTrendingMovies(page);
+    }
+  }, [page, isSearching]);
+
+  return { movies, searchMovies, loading, error, loadMoreMovies, hasMore };
 };
 
-export default useSearchMovies;
+export default useFetchMovies;

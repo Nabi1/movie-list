@@ -1,11 +1,27 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
+
 import { SearchBar } from "./components/SearchBar";
 import { MovieCard } from "./components/MovieCard";
 import useFetchMovies from "./hooks/useFetchMovies";
 
 const HomePage = () => {
-  const { movies, searchMovies, loading, error } = useFetchMovies();
+  const { movies, searchMovies, loading, error, loadMoreMovies, hasMore } =
+    useFetchMovies();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.offsetHeight - 500
+      ) {
+        loadMoreMovies();
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loadMoreMovies]);
 
   return (
     <div className="p-4">
@@ -19,6 +35,8 @@ const HomePage = () => {
           <MovieCard key={movie.id} movie={movie} />
         ))}
       </div>
+
+      {!hasMore && <p className="text-center mt-4">Plus de films à charger</p>}
     </div>
   );
 };

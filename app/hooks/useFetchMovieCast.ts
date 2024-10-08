@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+const API_TOKEN = process.env.NEXT_PUBLIC_TMDB_API_TOKEN;
+
 const useFetchMovieCast = (id: string | undefined) => {
   const [cast, setCast] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +14,12 @@ const useFetchMovieCast = (id: string | undefined) => {
     const fetchMovieCast = async () => {
       try {
         const response = await axios.get(
-          `https://api.themoviedb.org/3/movie/${id}/credits?api_key=1645a51e3552af467fa874335328bec9`
+          `https://api.themoviedb.org/3/movie/${id}/credits`,
+          {
+            headers: {
+              Authorization: `Bearer ${API_TOKEN}`,
+            },
+          }
         );
         setCast(response.data.cast.slice(0, 5));
         setError(null);

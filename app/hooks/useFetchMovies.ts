@@ -1,11 +1,20 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+const API_TOKEN = process.env.NEXT_PUBLIC_TMDB_API_TOKEN;
+
 const useSearchMovies = () => {
   const [movies, setMovies] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+
+  const axiosInstance = axios.create({
+    baseURL: "https://api.themoviedb.org/3",
+    headers: {
+      Authorization: `Bearer ${API_TOKEN}`,
+    },
+  });
 
   const searchMovies = async (query: string) => {
     if (!query) return;
@@ -15,9 +24,9 @@ const useSearchMovies = () => {
     setIsSearching(true);
 
     try {
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/search/movie?query=${query}&api_key=1645a51e3552af467fa874335328bec9`
-      );
+      const response = await axiosInstance.get(`/search/movie`, {
+        params: { query },
+      });
       setMovies(response.data.results);
     } catch (err) {
       setError("Error while fetching movies.");
@@ -31,9 +40,7 @@ const useSearchMovies = () => {
     setError(null);
 
     try {
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/trending/movie/week?api_key=1645a51e3552af467fa874335328bec9`
-      );
+      const response = await axiosInstance.get(`/trending/movie/week`);
       setMovies(response.data.results);
     } catch (err) {
       setError("Error while fetching trending movies.");

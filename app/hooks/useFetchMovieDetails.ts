@@ -3,8 +3,23 @@ import axios from "axios";
 
 const API_TOKEN = process.env.NEXT_PUBLIC_TMDB_API_TOKEN;
 
+type MovieDetails = {
+  id: number;
+  title: string;
+  overview: string;
+  poster_path: string;
+  release_date: string;
+  vote_average: number;
+  vote_count: number;
+  genres: {
+    id: number;
+    name: string;
+  }[];
+} | null;
+
 const useFetchMovieDetails = (id: string | undefined) => {
-  const [movie, setMovie] = useState<any>(null);
+  const [movie, setMovie] = useState<MovieDetails>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

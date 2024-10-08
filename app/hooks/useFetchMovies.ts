@@ -3,13 +3,31 @@ import axios from "axios";
 
 const API_TOKEN = process.env.NEXT_PUBLIC_TMDB_API_TOKEN;
 
+type Movie = {
+  backdrop_path: string;
+  id: number;
+  title: string;
+  original_title: string;
+  overview: string;
+  poster_path: string;
+  media_type: string;
+  adult: boolean;
+  original_language: string;
+  genre_ids: number[];
+  popularity: number;
+  release_date: string;
+  video: boolean;
+  vote_average: number;
+  vote_count: number;
+};
+
 const useFetchMovies = () => {
-  const [movies, setMovies] = useState<any[]>([]);
+  const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [activeQuery, setActiveQuery] = useState("");
 
   const axiosInstance = axios.create({
     baseURL: "https://api.themoviedb.org/3",
@@ -19,11 +37,15 @@ const useFetchMovies = () => {
   });
 
   const searchMovies = async (query: string, page: number = 1) => {
-    if (!query) return;
+    setActiveQuery(query);
+
+    if (!query.trim()) {
+      setPage(1);
+      return fetchTrendingMovies(1);
+    }
 
     setLoading(true);
     setError(null);
-    setIsSearching(true);
 
     try {
       const response = await axiosInstance.get(`/search/movie`, {
@@ -74,12 +96,12 @@ const useFetchMovies = () => {
   };
 
   useEffect(() => {
-    if (isSearching) {
-      searchMovies("", page);
+    if (activeQuery) {
+      searchMovies(activeQuery, page);
     } else {
       fetchTrendingMovies(page);
     }
-  }, [page, isSearching]);
+  }, [page]);
 
   return { movies, searchMovies, loading, error, loadMoreMovies, hasMore };
 };
